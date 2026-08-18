@@ -6,3 +6,9 @@ node_modules/
 .vercel
 *.tsbuildinfo
 next-env.d.ts
+
+# Internal planning docs — not part of the shipped product
+CLAUDE.md
+STATUS.md
+SPEC.md
+ARCHITECTURE.md
