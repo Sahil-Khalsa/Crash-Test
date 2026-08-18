@@ -79,7 +79,7 @@ Built together in Phase 0, before splitting: `lib/types.ts`, `lib/gemini.ts`.
 - [x] Headline score, severity colors (high=red, medium=amber, low=grey), expandable rows (input / agent response / judge reason) — already built in the Phase 2 UI rewrite
 - [x] Failures sorted above passes — already built in the Phase 2 UI rewrite
 - [x] Category grouping — Nesh, was the one Phase 4 item still missing (Phase 2's UI just named the category inline per-row, flat list). `app/page.tsx` now has `groupByCategory()`: buckets `report.results` by the matching `TestCase.category`, sorts groups so the ones with the most failures (ties broken by high-severity fail count) render first, and within each group sorts failures before passes by severity. Each group renders as its own section with a header (`Prompt Injection — 1 / 2 passed`, etc).
-- [x] **Accept:** `tsc --noEmit`, `eslint`, `next build` all clean. **Not visually verified this session** — no browser/screenshot tool was available here (Sahil's Phase 2 verification used `claude-in-chrome`, which isn't accessible in this session). The five-second-glance bar should still be sanity-checked in a real browser with `?demo=1` before Phase 6 freeze.
+- [x] **Accept:** `tsc --noEmit`, `eslint`, `next build` all clean. **Visually verified** (`?demo=1` in Chrome via `claude-in-chrome`): groups render sorted by failure count — Scope Violation (0/1) and Hallucination Bait (0/1) first, Prompt Injection (1/1) last — clean headers, no layout breakage. Clears the five-second-glance bar.
 
 ## Phase 5 — Optional, only if ahead of schedule, in this order
 
