@@ -27,12 +27,12 @@ Built together in Phase 0, before splitting: `lib/types.ts`, `lib/gemini.ts`.
 
 ## Phase 1 — Halves in isolation (:08–:20)
 
-**Nesh — Person B**
+**Nesh — Person B** — 🔄 in progress
 - [ ] `lib/exa.ts` — returns highlights for a hardcoded query
 - [ ] `lib/generate.ts` — returns schema-valid `TestCase[]` for a hardcoded system prompt
 - [ ] Verified by a script, not the UI
 
-**Sahil — Person A**
+**Sahil — Person A** — ✅ done
 - [x] `lib/target.ts` — `runTarget(systemPrompt, input)`, Gemini Flash branch only for now (returns `Promise<string>`, never throws — errors come back as `"[execution error] ..."` text so `runner.ts` can fail that test without a special-case type)
 - [x] `lib/runner.ts` — `runSuite(tests, targetSystemPrompt)`: executes + judges each `TestCase` against a hardcoded target prompt → `TestResult[]`. Batches in chunks of 5 (Phase 3 requirement, built in now). Judge prompt lifts the four "detect failure, not be charitable" rules from `ARCHITECTURE.md` verbatim.
 - [x] `app/page.tsx` — async Server Component, calls `runSuite` directly against the 3 fixture tests + a hardcoded airline-support-agent prompt, renders pass/fail per test. `export const dynamic = "force-dynamic"` so `next build` doesn't fire real API calls at build time.
