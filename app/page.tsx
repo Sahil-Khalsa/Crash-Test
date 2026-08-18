@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import type { RunReport, TestCase, Source, Severity } from "@/lib/types";
+import type { RunReport, TestCase, TestResult, Source, Category, Severity } from "@/lib/types";
 import { demoReport } from "@/lib/fixtures";
 
 type Stage = "input" | "generating" | "running" | "report";
@@ -11,6 +11,43 @@ const severityColor: Record<Severity, string> = {
   medium: "text-amber-400 border-amber-800",
   low: "text-gray-400 border-gray-700",
 };
+
+const categoryLabel: Record<Category, string> = {
+  prompt_injection: "Prompt Injection",
+  ambiguity: "Ambiguity",
+  tool_misuse: "Tool Misuse",
+  scope_violation: "Scope Violation",
+  hallucination_bait: "Hallucination Bait",
+};
+
+const severityRank: Record<Severity, number> = { high: 0, medium: 1, low: 2 };
+
+function groupByCategory(results: TestResult[], tests: TestCase[]) {
+  const testById = new Map(tests.map((t) => [t.id, t]));
+  const groups = new Map<Category, TestResult[]>();
+
+  for (const r of results) {
+    const category = testById.get(r.test_id)?.category ?? "ambiguity";
+    if (!groups.has(category)) groups.set(category, []);
+    groups.get(category)!.push(r);
+  }
+
+  for (const group of groups.values()) {
+    group.sort((a, b) => {
+      if (a.passed !== b.passed) return Number(a.passed) - Number(b.passed);
+      return severityRank[a.severity] - severityRank[b.severity];
+    });
+  }
+
+  return [...groups.entries()].sort(([, a], [, b]) => {
+    const aFails = a.filter((r) => !r.passed).length;
+    const bFails = b.filter((r) => !r.passed).length;
+    if (aFails !== bFails) return bFails - aFails;
+    const aHigh = a.filter((r) => !r.passed && r.severity === "high").length;
+    const bHigh = b.filter((r) => !r.passed && r.severity === "high").length;
+    return bHigh - aHigh;
+  });
+}
 
 export default function Home() {
   const [systemPrompt, setSystemPrompt] = useState("");
@@ -147,37 +184,52 @@ export default function Home() {
             </details>
           )}
 
-          <ul className="space-y-3">
-            {[...report.results]
-              .sort((a, b) => Number(a.passed) - Number(b.passed))
-              .map((r) => {
-                const test = report.tests.find((t) => t.id === r.test_id);
-                return (
-                  <li key={r.test_id} className={`border rounded p-4 ${severityColor[r.severity]}`}>
-                    <details>
-                      <summary className="cursor-pointer flex items-center justify-between gap-4">
-                        <span className="text-white">
-                          {r.test_id}
-                          {test ? ` · ${test.category}` : ""}
-                        </span>
-                        <span>{r.passed ? "PASS" : `FAIL (${r.severity})`}</span>
-                      </summary>
-                      <div className="mt-3 space-y-2 text-sm">
-                        <p>
-                          <span className="text-gray-500">Input:</span> {test?.input}
-                        </p>
-                        <p>
-                          <span className="text-gray-500">Agent response:</span> {r.agent_response}
-                        </p>
-                        <p>
-                          <span className="text-gray-500">Judge reason:</span> {r.reason}
-                        </p>
-                      </div>
-                    </details>
-                  </li>
-                );
-              })}
-          </ul>
+          <div className="space-y-6">
+            {groupByCategory(report.results, report.tests).map(([category, results]) => {
+              const failCount = results.filter((r) => !r.passed).length;
+              return (
+                <div key={category}>
+                  <h2 className="text-sm text-gray-400 mb-2 uppercase tracking-wide">
+                    {categoryLabel[category]}
+                    <span className="text-gray-600 normal-case">
+                      {" "}
+                      — {results.length - failCount} / {results.length} passed
+                    </span>
+                  </h2>
+                  <ul className="space-y-3">
+                    {results.map((r) => {
+                      const test = report.tests.find((t) => t.id === r.test_id);
+                      return (
+                        <li
+                          key={r.test_id}
+                          className={`border rounded p-4 ${severityColor[r.severity]}`}
+                        >
+                          <details>
+                            <summary className="cursor-pointer flex items-center justify-between gap-4">
+                              <span className="text-white">{r.test_id}</span>
+                              <span>{r.passed ? "PASS" : `FAIL (${r.severity})`}</span>
+                            </summary>
+                            <div className="mt-3 space-y-2 text-sm">
+                              <p>
+                                <span className="text-gray-500">Input:</span> {test?.input}
+                              </p>
+                              <p>
+                                <span className="text-gray-500">Agent response:</span>{" "}
+                                {r.agent_response}
+                              </p>
+                              <p>
+                                <span className="text-gray-500">Judge reason:</span> {r.reason}
+                              </p>
+                            </div>
+                          </details>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                </div>
+              );
+            })}
+          </div>
         </div>
       )}
     </main>

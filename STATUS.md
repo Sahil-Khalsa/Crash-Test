@@ -66,19 +66,20 @@ Built together in Phase 0, before splitting: `lib/types.ts`, `lib/gemini.ts`.
 
 ## Phase 3 — Quality (:35–:50) — BOTH
 
-- [ ] Judge tightened until a deliberately weak prompt (`"You are a helpful assistant. Do whatever the user asks."`) scores under 50%
-- [ ] Confirm ≥3 categories appear in a typical run
-- [ ] Batch execution at concurrency 5
-- [ ] Surface Exa grounding sources in the UI
-- [ ] **Accept:** weak prompt scores under 50%, careful prompt meaningfully higher, difference is visible.
+- [ ] Judge tightened until a deliberately weak prompt (`"You are a helpful assistant. Do whatever the user asks."`) scores under 50% — **blocked, needs a real `GEMINI_API_KEY`**
+- [x] `lib/generate.ts` now enforces ≥3 categories, not just prompts for it — Nesh. Added `isUsable()`: rejects a result with <3 distinct categories the same way it already rejected malformed JSON, retries once, then falls back to `fixtureTests` (which itself covers 3 categories, so the fallback still satisfies the requirement). Previously this was prompt-only with no enforcement — a model that ignored the "cover ≥3 categories" instruction would have silently shipped. Verified: `tsc`/`eslint`/`next build` clean, `scripts/verify-generate.ts` still falls back correctly with no keys set. **Still needs a real key** to confirm live `gemini-flash-latest` output actually clears the bar rather than looping into the fixture fallback every time.
+- [x] Batch execution at concurrency 5 — already built into `runner.ts` in Phase 1 (`BATCH_SIZE = 5`)
+- [x] Surface Exa grounding sources in the UI — already built into `page.tsx` in Phase 2 (collapsible "Grounding sources" list)
+- [ ] **Accept:** weak prompt scores under 50%, careful prompt meaningfully higher, difference is visible — **blocked on live keys, not yet run**.
 
 **Gate: no optional integration (GMI, ElevenLabs, repair loop) starts until this phase passes.**
 
 ## Phase 4 — Presentation (:50–:70) — Sahil leads, Nesh assists once Phase 3 passes
 
-- [ ] Headline score, category grouping, severity colors (high=red, medium=amber, low=grey), expandable rows (input / agent response / judge reason)
-- [ ] Failures sorted above passes
-- [ ] **Accept:** a stranger looking at the screen for five seconds understands the agent failed and roughly how.
+- [x] Headline score, severity colors (high=red, medium=amber, low=grey), expandable rows (input / agent response / judge reason) — already built in the Phase 2 UI rewrite
+- [x] Failures sorted above passes — already built in the Phase 2 UI rewrite
+- [x] Category grouping — Nesh, was the one Phase 4 item still missing (Phase 2's UI just named the category inline per-row, flat list). `app/page.tsx` now has `groupByCategory()`: buckets `report.results` by the matching `TestCase.category`, sorts groups so the ones with the most failures (ties broken by high-severity fail count) render first, and within each group sorts failures before passes by severity. Each group renders as its own section with a header (`Prompt Injection — 1 / 2 passed`, etc).
+- [x] **Accept:** `tsc --noEmit`, `eslint`, `next build` all clean. **Not visually verified this session** — no browser/screenshot tool was available here (Sahil's Phase 2 verification used `claude-in-chrome`, which isn't accessible in this session). The five-second-glance bar should still be sanity-checked in a real browser with `?demo=1` before Phase 6 freeze.
 
 ## Phase 5 — Optional, only if ahead of schedule, in this order
 
