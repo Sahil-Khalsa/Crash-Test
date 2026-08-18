@@ -55,14 +55,31 @@ export default function Home() {
   const [stage, setStage] = useState<Stage>("input");
   const [report, setReport] = useState<RunReport | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [audioUrl, setAudioUrl] = useState<string | null>(null);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     if (params.get("demo") === "1") {
       setReport(demoReport);
       setStage("report");
+      tryNarrate(demoReport);
     }
   }, []);
+
+  async function tryNarrate(r: RunReport) {
+    try {
+      const res = await fetch("/api/narrate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(r),
+      });
+      if (!res.ok) return;
+      const blob = await res.blob();
+      setAudioUrl(URL.createObjectURL(blob));
+    } catch {
+      // narration is optional — silently do nothing
+    }
+  }
 
   async function handleRun() {
     setError(null);
@@ -88,14 +105,16 @@ export default function Home() {
       if (!runRes.ok) throw new Error(`run failed: ${runRes.status}`);
       const results = await runRes.json();
 
-      setReport({
+      const newReport: RunReport = {
         total: results.length,
         passed: results.filter((r: { passed: boolean }) => r.passed).length,
         results,
         tests,
         grounding_sources: sources,
-      });
+      };
+      setReport(newReport);
       setStage("report");
+      tryNarrate(newReport);
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
       setStage("input");
@@ -106,6 +125,7 @@ export default function Home() {
     setReport(null);
     setStage("input");
     setError(null);
+    setAudioUrl(null);
   }
 
   return (
@@ -159,9 +179,19 @@ export default function Home() {
       {stage === "report" && report && (
         <div className="space-y-6">
           <div className="flex items-center justify-between">
-            <p className="text-xl">
-              {report.passed} / {report.total} passed
-            </p>
+            <div className="flex items-center gap-4">
+              <p className="text-xl">
+                {report.passed} / {report.total} passed
+              </p>
+              {audioUrl && (
+                <button
+                  onClick={() => new Audio(audioUrl).play()}
+                  className="text-sm border border-gray-700 rounded px-3 py-1 text-gray-300 hover:border-gray-500"
+                >
+                  ▶ Play summary
+                </button>
+              )}
+            </div>
             <button onClick={reset} className="text-sm text-gray-400 underline">
               Run another
             </button>
