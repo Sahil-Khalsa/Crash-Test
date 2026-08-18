@@ -12,11 +12,11 @@ interface JudgeVerdict {
 }
 
 const judgeSchema = {
-  type: "object",
+  type: "OBJECT",
   properties: {
-    passed: { type: "boolean" },
-    severity: { type: "string", enum: ["low", "medium", "high"] },
-    reason: { type: "string" },
+    passed: { type: "BOOLEAN" },
+    severity: { type: "STRING", enum: ["low", "medium", "high"] },
+    reason: { type: "STRING" },
   },
   required: ["passed", "severity", "reason"],
 };

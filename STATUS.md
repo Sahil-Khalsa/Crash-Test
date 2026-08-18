@@ -49,14 +49,20 @@ Built together in Phase 0, before splitting: `lib/types.ts`, `lib/gemini.ts`.
 
 ## Phase 2 — Integration (:20–:35) — BOTH
 
-- [x] `app/api/generate/route.ts` wired (ground + generate) — Nesh. `POST { systemPrompt, tools? }` → `{ tests, sources }`. Validates at the boundary: 400 on missing/empty `systemPrompt` or malformed JSON body; otherwise delegates straight to `generateTests`, which already never throws. Verified against a running dev server (`./node_modules/.bin/next dev`, no live keys): happy path returns 200 with the 3 fixture tests + `sources: []` (fallback path), both error cases return 400 with a JSON `{error}` body.
-- [ ] `app/api/run/route.ts` wired (execute + judge) — Sahil
-- [ ] UI: paste prompt → generate → run → render — Sahil
-- [ ] **Accept — minimum shippable product:** one complete run from a pasted prompt to a rendered score, live APIs, no manual steps.
+- [x] `app/api/generate/route.ts` wired (ground + generate) — Nesh. `POST { systemPrompt, tools? }` → `{ tests, sources }`. Validates at the boundary: 400 on missing/empty `systemPrompt` or malformed JSON body; otherwise delegates straight to `generateTests`, which already never throws. Verified against a running dev server, no live keys: happy path returns 200 with the 3 fixture tests + `sources: []` (fallback path), both error cases return 400 with a JSON `{error}` body.
+- [x] `app/api/run/route.ts` wired — Sahil. `POST { tests, targetSystemPrompt }` → `runSuite` → `TestResult[]`
+- [x] UI: `app/page.tsx` rewritten as a client component — Sahil. Input (two textareas + Run) → running (spinner, stage label) → report (score, grounding sources, severity-colored expandable rows, failures sorted first)
+- [x] `?demo=1` also wired now (Phase 6 work, pulled forward since `page.tsx` was already being rewritten and `demoReport` already existed from Phase 0) — loads `lib/fixtures.ts`'s `demoReport` client-side with zero network calls
+- [x] **Accept — minimum shippable product:** verified live in a real browser (Chrome via `claude-in-chrome`), not just `curl`:
+  - `?demo=1` renders the report instantly: `1 / 3 passed`, failures sorted first, severity colors correct, expandable rows show input/response/reason
+  - Normal flow (typed prompt → Run) round-trips through both API routes and lands on a report with no crash, even with **no API keys set** — `generateTests` fell back to the 3 fixture tests, `runSuite` surfaced `[execution error] GEMINI_API_KEY is not set` per test as a clean low-severity fail, not a broken page
+  - No console errors
+
+**Schema `type` casing — resolved:** Nesh independently flagged the same thing Sahil found and fixed in this pass — `lib/generate.ts`'s `testCaseSchema` used uppercase Gemini `Type` enum values (`"ARRAY"`, `"OBJECT"`, `"STRING"`, the correct REST API convention), while `lib/runner.ts`'s `judgeSchema` used lowercase (`"object"`, `"string"`, `"boolean"`), which would have silently failed (`callJSON` returns `ok:false`, folding every result into `passed:false, severity:"low"` instead of erroring loud). `judgeSchema` now matches the uppercase convention. Two independent people flagging the same bug is a decent signal it was real — still worth a live-key smoke test early in Phase 3 to confirm both schemas actually validate.
+
+**Still needed:** a real `GEMINI_API_KEY`/`EXA_API_KEY` to verify a live run end to end (grounding, generation quality, judge discrimination) — that's also Phase 3's job.
 
 **Fallback if missed:** hardcode generation to fixtures, demo execution + judging only.
-
-**Flag for Sahil — schema `type` casing mismatch:** `lib/generate.ts`'s `responseSchema` uses uppercase Gemini `Type` enum values (`"ARRAY"`, `"OBJECT"`, `"STRING"`), matching the REST API's documented protobuf-JSON convention. `lib/runner.ts`'s `judgeSchema` uses lowercase (`"object"`, `"string"`, `"boolean"`). Neither has been checked against a live key yet (both Phase 1 verifications degraded before hitting Gemini), so this is unconfirmed either way — worth a live-key smoke test early in Phase 3 before assuming either is right, since if lowercase is actually rejected, judging silently returns `ok:false` and every result folds into `passed:false, severity:"low"` rather than erroring loud.
 
 ## Phase 3 — Quality (:35–:50) — BOTH
 
