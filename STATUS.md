@@ -49,12 +49,14 @@ Built together in Phase 0, before splitting: `lib/types.ts`, `lib/gemini.ts`.
 
 ## Phase 2 — Integration (:20–:35) — BOTH
 
-- [ ] `app/api/generate/route.ts` wired (ground + generate)
-- [ ] `app/api/run/route.ts` wired (execute + judge)
-- [ ] UI: paste prompt → generate → run → render
+- [x] `app/api/generate/route.ts` wired (ground + generate) — Nesh. `POST { systemPrompt, tools? }` → `{ tests, sources }`. Validates at the boundary: 400 on missing/empty `systemPrompt` or malformed JSON body; otherwise delegates straight to `generateTests`, which already never throws. Verified against a running dev server (`./node_modules/.bin/next dev`, no live keys): happy path returns 200 with the 3 fixture tests + `sources: []` (fallback path), both error cases return 400 with a JSON `{error}` body.
+- [ ] `app/api/run/route.ts` wired (execute + judge) — Sahil
+- [ ] UI: paste prompt → generate → run → render — Sahil
 - [ ] **Accept — minimum shippable product:** one complete run from a pasted prompt to a rendered score, live APIs, no manual steps.
 
 **Fallback if missed:** hardcode generation to fixtures, demo execution + judging only.
+
+**Flag for Sahil — schema `type` casing mismatch:** `lib/generate.ts`'s `responseSchema` uses uppercase Gemini `Type` enum values (`"ARRAY"`, `"OBJECT"`, `"STRING"`), matching the REST API's documented protobuf-JSON convention. `lib/runner.ts`'s `judgeSchema` uses lowercase (`"object"`, `"string"`, `"boolean"`). Neither has been checked against a live key yet (both Phase 1 verifications degraded before hitting Gemini), so this is unconfirmed either way — worth a live-key smoke test early in Phase 3 before assuming either is right, since if lowercase is actually rejected, judging silently returns `ok:false` and every result folds into `passed:false, severity:"low"` rather than erroring loud.
 
 ## Phase 3 — Quality (:35–:50) — BOTH
 
