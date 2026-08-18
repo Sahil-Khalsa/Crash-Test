@@ -57,6 +57,12 @@ Each test case:
 - "pass_criteria" / "fail_criteria": concrete enough for another model to judge a response against them with no other context`;
 }
 
+function isUsable(data: unknown): data is TestCase[] {
+  if (!Array.isArray(data) || data.length === 0) return false;
+  const categories = new Set(data.map((t: TestCase) => t.category));
+  return categories.size >= 3;
+}
+
 export async function generateTests(
   systemPrompt: string,
   tools?: string
@@ -66,11 +72,11 @@ export async function generateTests(
   const prompt = buildPrompt(systemPrompt, tools, grounding);
 
   let result = await callJSON<TestCase[]>(MODEL, prompt, testCaseSchema);
-  if (!result.ok) {
+  if (!result.ok || !isUsable(result.data)) {
     result = await callJSON<TestCase[]>(MODEL, prompt, testCaseSchema);
   }
 
-  if (!result.ok || !Array.isArray(result.data) || result.data.length === 0) {
+  if (!result.ok || !isUsable(result.data)) {
     return { tests: fixtureTests, sources };
   }
 
