@@ -1,6 +1,6 @@
 # Crashtest
 
-Built at the Build Club AI hack night (SF, 2026-08-17) — hosted with Gemini/Google DeepMind, Exa, WorkOS, Convex, GMI Cloud, Photon, Mosaic, Vapi, ElevenLabs, AdaL, and Apify.
+Built at the Build Club AI hack night (SF, 2026-08-17) — hosted with Gemini/Google DeepMind and Exa, alongside WorkOS, Convex, GMI Cloud, Photon, Mosaic, Vapi, ElevenLabs, AdaL, and Apify.
 
 ## What we're building
 
@@ -38,6 +38,25 @@ If live APIs die mid-demo, `?demo=1` loads a complete, pre-baked successful run 
 
 Next.js 15 (App Router) + TypeScript + Tailwind, deployed to Vercel. Core APIs: Gemini and Exa. Optional (gated behind a passing judge-quality check): GMI Cloud for target execution, ElevenLabs for a spoken report summary.
 
-## Status
+These four are the only third-party services in the codebase — nothing else from the sponsor list above gets added (see `CLAUDE.md`).
 
-See `SPEC.md` for the phase-by-phase build plan and checkpoints, `ARCHITECTURE.md` for the module-level contract and file layout, and `CLAUDE.md` for the hard constraints this build does not violate.
+### Environment variables
+
+All server-side only, never exposed to the client:
+
+| Var | Required | Used for |
+|---|---|---|
+| `GEMINI_API_KEY` | yes | test generation, judging, target execution fallback |
+| `EXA_API_KEY` | yes | grounding search |
+| `GMI_API_KEY` | no | target execution — falls back to Gemini Flash if absent |
+| `ELEVENLABS_API_KEY` | no | spoken report summary — play button hidden if absent |
+
+## Build status
+
+Scaffolding stage — folder structure and the `lib/types.ts` contract are in place; module bodies are still stubs, no `package.json` yet. See `STATUS.md` for the live phase-by-phase checklist and who owns what, `SPEC.md` for the build plan and cut order, and `ARCHITECTURE.md` for the module contract and file layout. `CLAUDE.md` has the hard constraints this build does not violate.
+
+Once scaffolded, the target dev loop is `npm install && npm run dev`.
+
+## Sponsor tracks this build targets
+
+Judges can tell within seconds whether a sponsor is load-bearing or name-dropped. Based on what's actually wired into the stack above: **Best Use of Exa** (grounding is the core quality claim), **GMI Cloud's Clouder Opportunity** (`lib/target.ts` makes it the thing under test, not a name-drop), and **Best Use of ElevenLabs** (report narration, if Phase 5c lands). Vapi, Apify, Photon, WorkOS, Mosaic, and AdaL are not part of this build.

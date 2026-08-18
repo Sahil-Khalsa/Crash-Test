@@ -27,10 +27,12 @@ Built together in Phase 0, before splitting: `lib/types.ts`, `lib/gemini.ts`.
 
 ## Phase 1 — Halves in isolation (:08–:20)
 
-**Nesh — Person B** — 🔄 in progress
-- [ ] `lib/exa.ts` — returns highlights for a hardcoded query
-- [ ] `lib/generate.ts` — returns schema-valid `TestCase[]` for a hardcoded system prompt
-- [ ] Verified by a script, not the UI
+**Nesh — Person B** — ✅ done
+- [x] `lib/exa.ts` — `groundSearch(query)`: `POST api.exa.ai/search` with `x-api-key`, returns `{title, url, highlights}[]`; returns `[]` on missing key, non-2xx, or any error (grounding is degradable, per ARCHITECTURE.md)
+- [x] `lib/generate.ts` — `generateTests(systemPrompt, tools?)`: builds a query from the prompt, grounds via `groundSearch`, calls `gemini-flash-latest` through `callJSON` with a `TestCase[]` `responseSchema` (category constrained to the `Category` enum). One retry on invalid JSON, then falls back to `fixtureTests` — signature never throws, matching the fixed `generateTests` contract in ARCHITECTURE.md (no `Result` wrapper on this one, unlike `gemini.ts`/`exa.ts` internals)
+- [x] Verified by `scripts/verify-generate.ts` (`npm exec --yes -- tsx scripts/verify-generate.ts`, not the UI): with no `EXA_API_KEY`/`GEMINI_API_KEY` set, `groundSearch` returns `[]` and `generateTests` falls back to the 3 fixture tests without throwing — confirms the degrade path. **Still needed:** a real `EXA_API_KEY`/`GEMINI_API_KEY` to confirm live grounding and that `gemini-flash-latest` actually returns ≥3 categories across 12–15 cases (schema-shape only verified so far, not live-model output).
+
+**Note:** `npx tsx` failed in this shell (npm misrouted it as an unknown npm subcommand); `npm exec --yes -- tsx <file>` worked. If that recurs, that's the workaround.
 
 **Sahil — Person A** — ✅ done
 - [x] `lib/target.ts` — `runTarget(systemPrompt, input)`, Gemini Flash branch only for now (returns `Promise<string>`, never throws — errors come back as `"[execution error] ..."` text so `runner.ts` can fail that test without a special-case type)
