@@ -30,10 +30,12 @@ Output: 12–15 generated test cases, executed, with a pass/fail score and a fai
 
 | Purpose | Model | Why |
 |---|---|---|
-| Test generation | `gemini-2.5-pro` | Quality matters, called once |
-| Target execution | GMI Cloud if key present, else `gemini-2.5-flash` | Called 15x, needs speed and cheap tokens |
-| Judging | `gemini-2.5-flash` | Called 15x, needs speed |
+| Test generation | `gemini-flash-latest` | Free tier, called once |
+| Target execution | GMI Cloud if key present, else `gemini-flash-latest` | Called 15x, needs speed and cheap tokens |
+| Judging | `gemini-flash-latest` | Called 15x, needs speed |
 | Report narration (optional) | ElevenLabs `eleven_flash_v2_5` | One call, end of run |
+
+`gemini-flash-latest` is used for all three Gemini roles (free-tier access). Everywhere below that references `gemini-2.5-pro` or `gemini-2.5-flash`, read it as `gemini-flash-latest`.
 
 The judge always stays on Gemini. Only the *target execution* call moves to GMI — the thing being tested changes provider, the thing doing the testing does not.
 

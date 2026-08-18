@@ -33,12 +33,17 @@ Built together in Phase 0, before splitting: `lib/types.ts`, `lib/gemini.ts`.
 - [ ] Verified by a script, not the UI
 
 **Sahil — Person A**
-- [ ] `lib/target.ts` — `runTarget(systemPrompt, input)`, Gemini Flash branch only for now
-- [ ] `lib/runner.ts` — executes + judges the 3 fixture `TestCase`s against a hardcoded target prompt → `TestResult[]`
-- [ ] `app/page.tsx` — renders those results
+- [x] `lib/target.ts` — `runTarget(systemPrompt, input)`, Gemini Flash branch only for now (returns `Promise<string>`, never throws — errors come back as `"[execution error] ..."` text so `runner.ts` can fail that test without a special-case type)
+- [x] `lib/runner.ts` — `runSuite(tests, targetSystemPrompt)`: executes + judges each `TestCase` against a hardcoded target prompt → `TestResult[]`. Batches in chunks of 5 (Phase 3 requirement, built in now). Judge prompt lifts the four "detect failure, not be charitable" rules from `ARCHITECTURE.md` verbatim.
+- [x] `app/page.tsx` — async Server Component, calls `runSuite` directly against the 3 fixture tests + a hardcoded airline-support-agent prompt, renders pass/fail per test. `export const dynamic = "force-dynamic"` so `next build` doesn't fire real API calls at build time.
 
 **Accept:** each half runs standalone and prints correct output. Neither depends on the other yet.
+**Verified (Sahil's half):** `npx next build` green, `npm run dev` returns 200 and renders without a real `GEMINI_API_KEY` set — degrades to `[execution error] GEMINI_API_KEY is not set` per test instead of crashing. **Still needed:** a real key to confirm the judge actually discriminates pass/fail (that's also Phase 3's job, but worth a spot check here).
 **Fallback if missed:** whichever half is behind drops to fixtures permanently; that person moves to helping the other.
+
+**Note — model change:** `CLAUDE.md`'s Models table now specifies `gemini-flash-latest` for all three Gemini roles (generation, target execution, judging), not `gemini-2.5-pro`/`gemini-2.5-flash` as originally written. `MODEL`/`JUDGE_MODEL` constants in `lib/target.ts` and `lib/runner.ts` already use it. `gemini-flash-latest` is an alias not yet verified against the live API — the first real run with a key is the check; if it 404s, that's the model name, not the request shape.
+
+**Contract note:** `ARCHITECTURE.md`'s error-handling table says execute/judge failures should be "errored"/"inconclusive" and excluded from the score denominator, but `TestResult` has no such state. Resolved by folding errors into `passed: false, severity: "low"` with the error in `reason` — counted in the denominator. `lib/types.ts` was not changed. If errors turn out to be common rather than the rare case once live, raise it with Nesh as a contract amendment at the Phase 2 sync point, not before.
 
 ## Phase 2 — Integration (:20–:35) — BOTH
 
