@@ -1,1 +1,3 @@
-// TODO(Phase 5, gated): rewrite prompt -> { newPrompt }
+export async function POST() {
+  return Response.json({ error: "not implemented" }, { status: 501 });
+}

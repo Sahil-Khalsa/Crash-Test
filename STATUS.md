@@ -15,11 +15,13 @@ Built together in Phase 0, before splitting: `lib/types.ts`, `lib/gemini.ts`.
 
 ## Phase 0 — Setup (:00–:08) — BOTH
 
-- [ ] Next.js app scaffolded (`create-next-app`, TS, Tailwind)
-- [ ] `lib/types.ts` written — full contract (`Category`, `Severity`, `TestCase`, `TestResult`, `RunReport`)
-- [ ] `lib/gemini.ts` — `callJSON(model, prompt, schema)` + a plain-text sibling (needed by `target.ts`'s Gemini branch and `narrate.ts`, which return freeform text, not JSON)
-- [ ] `lib/fixtures.ts` stubbed — 3 hardcoded `TestCase` + 3 `TestResult`
-- [ ] **Accept:** `npm run dev` serves a page. Both import `TestCase` from `lib/types.ts`.
+- [x] Next.js app scaffolded (`create-next-app@15`, TS, Tailwind v4, App Router)
+- [x] `lib/types.ts` written — full contract (`Category`, `Severity`, `TestCase`, `TestResult`, `RunReport`, `Source`)
+- [x] `lib/gemini.ts` — `callJSON<T>(model, prompt, schema)`, returns `Result<T>` (never throws, per CLAUDE.md conventions). `target.ts`'s Gemini branch and `narrate.ts` need freeform text, not JSON — they'll call the Gemini REST endpoint directly rather than through `callJSON`, so this file stays the single function ARCHITECTURE.md describes.
+- [x] `lib/fixtures.ts` — 3 hardcoded `TestCase` + 3 `TestResult`, plus a composed `demoReport: RunReport` for `?demo=1` (Phase 6) so that doesn't need rework later
+- [x] Placeholder `app/page.tsx` and stub `POST` handlers in the three `app/api/*/route.ts` so `next build` (what Vercel runs) is green, not just `next dev`
+- [x] **Accept:** `npm run dev` serves a page (verified: 200, renders). `npx next build` compiles clean. Both import `TestCase` from `lib/types.ts`.
+- [ ] Fill in real values in `.env.local` (`GEMINI_API_KEY`, `EXA_API_KEY` — template already created, gitignored)
 
 **→ Split here. Do not touch each other's files until :35.**
 

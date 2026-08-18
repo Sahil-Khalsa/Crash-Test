@@ -1,1 +1,3 @@
-// TODO(Phase 2): ground + generate -> { tests, sources }
+export async function POST() {
+  return Response.json({ error: "not implemented" }, { status: 501 });
+}
